@@ -164,7 +164,7 @@ print(f"\n LA TABLA DINAMICA: {tabla_dinamica}")
 promedio_por_sentido = data.pivot_table(values='CANTIDAD', index='SENTIDO', aggfunc='mean')
 print(f"\n EL PROMEDIO DE AUTOS POR SENTIDO {promedio_por_sentido}")
  
-#se pueden hacer mas tablas(si)
+#se pueden ha
 #filtro por tipo de dato -> 
 egreso_data = data[data['SENTIDO'] == 'egreso']
 print(egreso_data.head())
