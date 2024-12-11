@@ -152,22 +152,29 @@ promedio_por_hora = data_cleaned.groupby('HORA')['CANTIDAD'].mean()
 print(promedio_por_hora)
 
 # Agrupar cantidad por coordenadas
-flujo_por_coordenadas = data.groupby(['LATITUD', 'LONGITUD'])['CANTIDAD'].sum()
+flujo_por_coordenadas = data_cleaned.groupby(['LATITUD', 'LONGITUD'])['CANTIDAD'].sum()
 print(flujo_por_coordenadas)    
 
 #Las tablas dinámicas son una forma poderosa de resumir datos.
 # Crear una tabla dinámica
-tabla_dinamica = data.pivot_table(values='CANTIDAD', index='HORA', columns='SENTIDO', aggfunc='sum', fill_value=0)
+tabla_dinamica = data_cleaned.pivot_table(values='CANTIDAD', index='HORA', columns='SENTIDO', aggfunc='sum', fill_value=0)
 print(f"\n LA TABLA DINAMICA: {tabla_dinamica}")
 
 # Promedio por 'SENTIDO'
-promedio_por_sentido = data.pivot_table(values='CANTIDAD', index='SENTIDO', aggfunc='mean')
+promedio_por_sentido = data_cleaned. pivot_table(values='CANTIDAD', index='SENTIDO', aggfunc='mean')
 print(f"\n EL PROMEDIO DE AUTOS POR SENTIDO {promedio_por_sentido}")
  
-#se pueden ha
+#se pueden hacer muchas tablas 
 #filtro por tipo de dato -> 
-egreso_data = data[data['SENTIDO'] == 'egreso']
+egreso_data = data_cleaned[data_cleaned['SENTIDO'] == 'egreso']
+ingreso_data= data_cleaned[data_cleaned['SENTIDO']== 'ingreso']
+interna_data= data_cleaned[data_cleaned['SENTIDO']== 'interna']
 print(egreso_data.head())
+print()
+print(ingreso_data.head())
+print()
+print(interna_data.head())
+print()
 filtrado_horas = data_cleaned[(data_cleaned['hora solo'] >= 14) & (data_cleaned ['hora solo'] <= 16)]
 print(filtrado_horas.head())
 
