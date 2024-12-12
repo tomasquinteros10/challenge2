@@ -1,182 +1,264 @@
 import pandas as pd
 
-# se carga el archivo CSV
-data = pd.read_csv('dataset_flujo_vehicular.csv')
+data = pd.read_csv('dataset_flujo_vehicular.csv') 
 
-# # Explorar las primeras filas para confirmar la carga
-# print(data.head())
-# convierto los datos de cantidad en int (ESTAN EN FLOAT)
-data['CANTIDAD'].astype(int)
-# # Información general sobre el dataset
-# #print(data.info())
+ #primeras filas
+print(data.head())  
 
-# # Resumen estadístico de las columnas numéricas
-# print(data.describe())
+#Información general sobre el dataset
+print(data.info())   
+print(data.describe()) 
 
-#cambio de datetime 
-# Convertir la columna HORA a tipo datetime, permitiendo inferir el formato
+# cantidad de filas 
+cantidad_filas = len(data)
+print(f"Cantidad de filas: {cantidad_filas}")
+
+# valores nulos de cada columna
+print(f"valores nulos en cada columna: \n{data.isnull().sum()}")
+
+# cantidad de filas duplicadas
+print(f"filas duplicadas: {data.duplicated().sum()}")
+
+
+# cambio de datetime 
 data['HORA'] = pd.to_datetime(data['HORA'], errors='coerce', dayfirst=True)
 
-# Verificar la conversión
+# verificacion de la conversion
 print(data['HORA'].head())
-print(data['HORA'].dtype)  # Debe mostrar datetime64[ns]
-# Verificar cuántos valores no se pudieron convertir
+
+# valores no convertidos
 nulos_hora = data['HORA'].isnull().sum()
-print(f'Número de valores nulos después de la conversión: {nulos_hora}')
+print(f'valores nulos después de la conversión: {nulos_hora}')
 
-# Opcionalmente, puedes filtrar y ver los valores originales que no se pudieron convertir
-valores_no_convertibles = data[data['HORA'].isnull()]
-print(valores_no_convertibles)
-
-# Normalizar la columna SENTIDO a minúsculas
+# normalizar la columna SENTIDO
 data['SENTIDO'] = data['SENTIDO'].str.lower()
-# Verificar los valores únicos en la columna SENTIDO
-print(data['SENTIDO'].unique())
 
-# Verificar cuántos valores nulos hay en cada columna
-print(f"\nLos valores nulos en cada columna: {data.isnull().sum()}")
+# verificar los valores únicos de columna SENTIDO
+print(f"valores únicos de SENTIDO: {data['SENTIDO'].unique()}")
 
-# Calcular Q1 y Q3
+# calcular cuartiles y rango intercuartil 
 Q1 = data['CANTIDAD'].quantile(0.25)
 Q3 = data['CANTIDAD'].quantile(0.75)
 IQR = Q3 - Q1
-
-# Calcular límites
+# 186412 10123
+# identificacion de valores atipicos
 limite_inferior = Q1 - 1.5 * IQR
 limite_superior = Q3 + 1.5 * IQR
-
-# Identificar valores atípicos
 atypicall = data[(data['CANTIDAD'] < limite_inferior) | (data['CANTIDAD'] > limite_superior)]
+cantidad_filas2 = len(atypicall)
+print(f"filas con datos atip{cantidad_filas2}")
+print(f"Los valores atipicos son: \n{atypicall}")
 
-print("Valores atípicos encontrados: ")
-print(atypicall) #no hay xd
+# Imputar outliers con la mediana
+import numpy as np
+mediana = data['CANTIDAD'].median()
+data['CANTIDAD'] = np.where((data['CANTIDAD'] < limite_inferior) | (data['CANTIDAD'] > limite_superior), mediana, data['CANTIDAD'])
+data2 = data
+print(data2)
+# Verificar el número de outliers restantes
+outliers = data2[(data2['CANTIDAD'] < limite_inferior) | (data2['CANTIDAD'] > limite_superior)]
+print(f'Número de outliers restantes: {outliers.shape[0]}')
 
-# Verificar latitud y longitud
+# verificar la latitud y la longitud
 invalid_latitudes = data[(data['LATITUD'] < -90) | (data['LATITUD'] > 90)]
 invalid_longitudes = data[(data['LONGITUD'] < -180) | (data['LONGITUD'] > 180)]
-
 print(f"Número de latitudes inválidas: {len(invalid_latitudes)}")
 print(f"Número de longitudes inválidas: {len(invalid_longitudes)}")
 
-# Número de filas duplicadas
-print(f"\nNúmero de filas duplicadas: {data.duplicated().sum()}")
+# suma de elementos de cantidad
+total_cantidad= data['CANTIDAD'].sum()
+print(f"suma de los valores de 'cantidad': {total_cantidad}")
 
-# #cantidad de filas 
-# cantidad_filas = len(data)
-# print(f"Cantidad de filas: {cantidad_filas}")
-
-# # suma de elementos de cantidad
-# total_cantidad= data['CANTIDAD'].sum()
-# print(f"La suma de todos los autos es: {total_cantidad}")
-
-# #primera fila 
-# primera_fila = data.head(1)
-# print(primera_fila)
-
-# #ultima fila
-# ultima_fila = data.tail(1)
-# print(ultima_fila)
-
-#imprimir valor menor y mayor
-#print(f"El minimo es: {data['CANTIDAD'].min()}") 
-# print(f"El maximo es: {data['CANTIDAD'].max()}") a filtred
 # data_filtered = [x for x in data['CANTIDAD'] if x < 20000] 
 #print(len(data['CANTIDAD']))
 # print(len(data_filtered))       
 # data_filtered2 = [x for x in data['CANTIDAD'] if x >=20000]
 # print(len(data_filtered2))
 # print(data_filtered)
-
 #import matplotlib.pyplot as plt
-
-# #Si hay una columna numérica, graficamos su distribución
-# plt.hist(data_filtered,bins=20)
+#Si hay una columna numérica, graficamos su distribución
+# plt.hist(data2,bins=20)
 # plt.title('CANTIDAD')
 # plt.xlabel('Valor')
 # plt.ylabel('Frecuencia')
 # plt.show()
 
-#verifico cantidad de valores nulos
-print(data[['LATITUD', 'LONGITUD']].isnull().sum())
-#Decisión sobre Eliminación: Un porcentaje del 1.79% es relativamente bajo. Si decides eliminar estas filas, el impacto en el conjunto de datos será mínimo.(nulos/nfilas)*100)
-# Eliminar filas con valores nulos en las columnas LATITUD y LONGITUD
-data_cleaned = data.dropna(subset=['LATITUD', 'LONGITUD'])
 
-# Verificar la cantidad de valores nulos después de la eliminación
-print("\nValores nulos después de la eliminación:")
-print(data_cleaned.isnull().sum())
-
-# Mostrar el número de filas antes y después
-print(f'\n Número de filas originales: {data.shape[0]}')
-print(f'\n Número de filas después de eliminar: {data_cleaned.shape[0]}')
-data_cleaned.to_csv('dataset_flujo_vehicular.csv', index=False)
-print('datos actualizados')
+print(f'datos actualizados: \n{data2}')
  
-# 1. Extraer componentes de la columna HORA
-data_cleaned['HORA'] = pd.to_datetime(data_cleaned['HORA'])
+# nuevas componentes de la columna HORA
+data2['HORA'] = pd.to_datetime(data2['HORA'])
+data2['año'] = data2['HORA'].dt.year
+data2['mes'] = data2['HORA'].dt.month
+data2['dia'] = data2['HORA'].dt.day
+data2['hora'] = data2['HORA'].dt.hour
+print(data2['hora'].head())
 
-# Crear nuevas columnas: año, mes, día, hora
-data_cleaned['año solo'] = data_cleaned['HORA'].dt.year
-data_cleaned['mes solo'] = data_cleaned['HORA'].dt.month
-data_cleaned['día solo'] = data_cleaned['HORA'].dt.day
-data_cleaned['hora solo'] = data_cleaned['HORA'].dt.hour
- 
-print(data_cleaned['hora solo'].head())
-# 2. Calcular densidad de tráfico (cantidad dividida por diferencia absoluta de coordenadas)
-data_cleaned['densidad'] = data_cleaned['CANTIDAD'] / (data_cleaned['LATITUD'] - data_cleaned['LONGITUD']).abs()
+# densidad de tráfico (cantidad dividida por diferencia absoluta de coordenadas)
+data2['densidad'] = data2['CANTIDAD'] / (data2['LATITUD'] - data2['LONGITUD']).abs()
 
+# # escalar la columna CANTIDAD
+# from sklearn.preprocessing import StandardScaler
+# scaler = StandardScaler()
+# data2['CANTIDAD_ESCALADA'] = scaler.fit_transform(data2[['CANTIDAD']])
 
-# 3. Escalar la columna CANTIDAD
-from sklearn.preprocessing import StandardScaler
-
-scaler = StandardScaler()
-data_cleaned['CANTIDAD_ESCALADA'] = scaler.fit_transform(data_cleaned[['CANTIDAD']])
-
-# Crear un diccionario para codificar las categorías
+# diccionario para codificar las categorías
 codificacion = {'interna': 0, 'ingreso': 1, 'egreso': 2}
-
-# Aplicar la codificación
-data_cleaned['SENTIDO_CODIFICADO'] = data_cleaned['SENTIDO'].map(codificacion)
-
-# Verificar los resultados de la codificacion
-print(data_cleaned[['SENTIDO', 'SENTIDO_CODIFICADO']].head())
-
+data2['SENTIDO_CODIFICADO'] = data2['SENTIDO'].map(codificacion)
+print(data2[['SENTIDO', 'SENTIDO_CODIFICADO']].head())
+print(data2.head())
 # Después de transformar los datos, puedes realizar análisis agrupados para obtener insights sobre el flujo vehicular según el sentido:
+# agrupar por sentido y sumar la cantidad
+analisis_sentido = data2.groupby('SENTIDO')['CANTIDAD'].sum()
+print(f"sentido por cantidad: \n{analisis_sentido}")
+print(data2['SENTIDO_CODIFICADO'])
+import matplotlib.pyplot as plt
 
-# Agrupar por sentido y sumar la cantidad
-analisis_sentido = data_cleaned.groupby('SENTIDO')['CANTIDAD'].sum()
-print(analisis_sentido)
+# cantidad por hora
+cantidadpor_hora = data2.groupby('hora')['CANTIDAD'].sum()
+print(f"promedio por hora: \n{cantidadpor_hora}")
+cantidadpor_hora.plot(kind='bar', color='skyblue', figsize=(8, 6))
 
-# Agrupar cantidad por hora
-promedio_por_hora = data_cleaned.groupby('HORA')['CANTIDAD'].mean()
-print(promedio_por_hora)
+# Personalizar el gráfico
+plt.title(' vehiculos por hora')
+plt.xlabel('hora')
+plt.ylabel('vehiculo')
+plt.xticks(rotation=45)
+plt.show()
 
-# Agrupar cantidad por coordenadas
-flujo_por_coordenadas = data_cleaned.groupby(['LATITUD', 'LONGITUD'])['CANTIDAD'].sum()
-print(flujo_por_coordenadas)    
+# agrupar cantidad por coordenadas
+flujo_por_coordenadas = data2.groupby(['LATITUD', 'LONGITUD'])['CANTIDAD'].sum()
+print(f"flujo de cantidad por coordenadas: \n{flujo_por_coordenadas}")    
 
-#Las tablas dinámicas son una forma poderosa de resumir datos.
-# Crear una tabla dinámica
-tabla_dinamica = data_cleaned.pivot_table(values='CANTIDAD', index='HORA', columns='SENTIDO', aggfunc='sum', fill_value=0)
-print(f"\n LA TABLA DINAMICA: {tabla_dinamica}")
+            # tabla dinámica
+tabla_dinamica = data2.pivot_table(values='CANTIDAD', index='HORA', columns='SENTIDO', aggfunc='sum', fill_value=0)
+print(f" la tabla dinamica: \n{tabla_dinamica}")
 
-# Promedio por 'SENTIDO'
-promedio_por_sentido = data_cleaned. pivot_table(values='CANTIDAD', index='SENTIDO', aggfunc='mean')
-print(f"\n EL PROMEDIO DE AUTOS POR SENTIDO {promedio_por_sentido}")
- 
-#se pueden hacer muchas tablas 
-#filtro por tipo de dato -> 
-egreso_data = data_cleaned[data_cleaned['SENTIDO'] == 'egreso']
-ingreso_data= data_cleaned[data_cleaned['SENTIDO']== 'ingreso']
-interna_data= data_cleaned[data_cleaned['SENTIDO']== 'interna']
-print(egreso_data.head())
-print()
-print(ingreso_data.head())
-print()
-print(interna_data.head())
-print()
-filtrado_horas = data_cleaned[(data_cleaned['hora solo'] >= 14) & (data_cleaned ['hora solo'] <= 16)]
-print(filtrado_horas.head())
+ # promedio por 'SENTIDO'
+promedio_por_sentido = data2. pivot_table(values='CANTIDAD', index='SENTIDO', aggfunc='mean')
+print(f" el promedio de datos por sentido: \n{promedio_por_sentido}")
+    
+#     # se pueden hacer muchas tablas 
+# # filtro por tipo de dato -> 
+# egreso_data = data2['SENTIDO'] == 'egreso'
+# ingreso_data= data2['SENTIDO'] == 'ingreso'
+# interna_data= data2['SENTIDO'] == 'interna'
+# print(egreso_data.head())
+# print()
+# print(ingreso_data.head())
+# print()
+# print(interna_data.head())
+# print()
 
-print(data_cleaned)
+# primer y ultimo dia del dataset
+min_dia=data2['dia'][(data2['año']==2020) & (data2['mes']==3)].min()
+print(f"el primer dia es {min_dia} de marzo de 2020")
+max_dia=data2['dia'][(data2['año']==2022) & (data2['mes']==3)].max()
+print(f"el ultimo dia es {max_dia} de marzo de 2023")
 
+# cantidad de vehiculos en circulacion el dia 1 de mayo de 2020 y 2021
+el1_mayo2020 = data2['CANTIDAD'][(data2['dia']  == 1 )& (data2['mes'] == 5) & (data2['año'] == 2020) ].sum()
+print(f"la cantidad total de vehiculos en 1/5/2020 es  {el1_mayo2020}")
+el1_mayo2021 = data2['CANTIDAD'][(data2['dia']  == 1 )& (data2['mes'] == 5) & (data2['año'] == 2021) ].sum()
+print(f"la cantidad total de vehiculos en 1/5/2021 es  {el1_mayo2021}")
+
+# cantidad de vehiculos en inicio de pandemia 20/3 de 2020 y 2021 y en 12/3 de 2022 en hora pico de CABA
+horapico1 = data2['CANTIDAD'][(data2['hora'] >= 7 )& (data2['hora'] <= 11) & (data2['año'] == 2020)&(data2['dia'] ==20) &(data2['mes']== 3)].sum()
+print(f"horapico2020: {horapico1}")
+horapico2 = data2['CANTIDAD'][(data2['hora'] >= 7 )& (data2['hora'] <= 11) & (data2['año'] == 2021)&(data2['dia'] ==20) &(data2['mes']== 3)].sum()
+print(f"horapico2021: {horapico2}") 
+horapico3 = data2['CANTIDAD'][(data2['hora'] >= 7 )& (data2['hora'] <= 11) & (data2['año'] == 2022)&(data2['dia'] ==12) &(data2['mes']== 3)].sum()
+print(f"horapico2022: {horapico3}")
+horapico1_0 = data2['CANTIDAD'][(data2['hora'] >= 16 )& (data2['hora'] <= 20) & (data2['año'] == 2020)&(data2['dia'] ==2) &(data2['mes']== 3)].sum()
+print(f"horapico2020 n: {horapico1_0}")
+horapico2_0 = data2['CANTIDAD'][(data2['hora'] >= 16 )& (data2['hora'] <= 20) & (data2['año'] == 2021)&(data2['dia'] ==2) &(data2['mes']== 3)].sum()
+print(f"horapico2021 n: {horapico2_0}")
+horapico3_0 = data2['CANTIDAD'][(data2['hora'] >= 16 )& (data2['hora'] <= 20) & (data2['año'] == 2022)&(data2['dia'] ==2) &(data2['mes']== 3)].sum()
+print(f"horapico2022 n: {horapico3_0}")
+
+# comparacion de 2 de marzo en rango de 7 a 20
+cant1 = data2['CANTIDAD'][(data2['hora'] >= 7 )& (data2['hora'] <= 20) & (data2['año'] == 2020)&(data2['dia'] ==2) &(data2['mes']== 3)].sum()
+
+print(f"cantidad en 2/3/2020: {cant1}")
+
+cant2 = data2['CANTIDAD'][(data2['hora'] >= 7) & (data2['hora'] <= 20) & (data2['año'] == 2021)&(data2['dia'] ==2) &(data2['mes']== 3)].sum()
+
+print(f"cantidad en 2/3/2021: {cant2}")
+
+cant3 = data2['CANTIDAD'][(data2['hora'] >= 7 )& (data2['hora'] <= 20) & (data2['año'] == 2022)&(data2['dia'] ==2) &(data2['mes']== 3)].sum()
+
+print(f"cantidad en 2/3/2022: {cant3}")
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# variables categóricas a numéricas
+label_encoders = {}
+for column in ['CODIGO_LOCACION', 'HORA', 'SENTIDO']:
+    le = LabelEncoder()
+    data2[column] = le.fit_transform(data2[column])
+    label_encoders[column] = le  # Guardar el encoder si se necesita más tarde
+
+# Definir las características (X) y la variable objetivo (y)
+X = data2[['CODIGO_LOCACION', 'HORA', 'SENTIDO', 'LATITUD', 'LONGITUD']]
+y = data2['CANTIDAD']
+
+# Dividir los datos en conjuntos de entrenamiento y prueba (80% - 20%)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Crear el modelo
+model = LinearRegression()
+
+# Entrenar el modelo
+model.fit(X_train, y_train)
+
+# Hacer predicciones sobre el conjunto de prueba
+y_pred = model.predict(X_test)
+
+# Evaluar el rendimiento del modelo
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f'Mean Squared Error: {mse:.2f}')
+print(f'R^2 Score: {r2:.2f}')
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+
+
+# Visualizar las primeras filas del DataFrame
+print(data2.head())
+
+# Convertir variables categóricas a numéricas
+label_encoders = {}
+for column in ['CODIGO_LOCACION', 'HORA', 'SENTIDO']:
+    le = LabelEncoder()
+    data2[column] = le.fit_transform(data2[column])
+    label_encoders[column] = le  # Guardar el encoder si se necesita más tarde
+
+# Definir las características (X) y la variable objetivo (y)
+X = data2[['CODIGO_LOCACION', 'HORA', 'SENTIDO', 'LATITUD', 'LONGITUD']]
+y = data2['CANTIDAD']
+
+# Dividir los datos en conjuntos de entrenamiento y prueba (80% - 20%)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Crear el modelo de Árbol de Decisión
+model = DecisionTreeRegressor(random_state=42)
+
+# Entrenar el modelo
+model.fit(X_train, y_train)
+
+# Hacer predicciones sobre el conjunto de prueba
+y_pred = model.predict(X_test)
+
+# Evaluar el rendimiento del modelo
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f'Mean Squared Error: {mse:.2f}')
+print(f'R^2 Score: {r2:.2f}')
